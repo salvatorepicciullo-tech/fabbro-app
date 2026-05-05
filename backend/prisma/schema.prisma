@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Client {
+  id        Int      @id @default(autoincrement())
+  name      String
+  phone     String?
+  email     String?   // 🔥 nuovo
+  address   String?   // 🔥 nuovo
+  createdAt DateTime @default(now())
+  quotes    Quote[]
+}
+
+model Quote {
+  id         Int          @id @default(autoincrement())
+  clientId   Int
+  client     Client       @relation(fields: [clientId], references: [id])
+  subtotal   Float
+  ivaRate    Float
+  ivaAmount  Float
+  total      Float
+  description String?   // 👈 NUOVO
+  createdAt  DateTime     @default(now())
+  items      QuoteItem[]
+}
+
+model QuoteItem {
+  id       Int    @id @default(autoincrement())
+  quoteId  Int
+  quote    Quote  @relation(fields: [quoteId], references: [id])
+  type     String
+  name     String
+  qty      Float
+  price    Float
+  total    Float
+}
+
+model PriceItem {
+  id        Int      @id @default(autoincrement())
+  name      String
+  price     Float
+  unit      String
+  createdAt DateTime @default(now())
+}
