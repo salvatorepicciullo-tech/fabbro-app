@@ -269,6 +269,58 @@ app.put("/quotes/:id", async (req, res) => {
   }
 });
 
+// ELIMINA PREVENTIVO
+app.delete("/quotes/:id", async (req, res) => {
+
+  const id = Number(req.params.id);
+
+  try {
+
+    // trova preventivo
+    const quote =
+      await prisma.quote.findUnique({
+        where: { id }
+      });
+
+    if (!quote) {
+
+      return res.status(404).json({
+        error: "Preventivo non trovato"
+      });
+    }
+
+    // elimina righe collegate
+    await prisma.quoteItem.deleteMany({
+
+      where: {
+        quoteId: id
+      }
+    });
+
+    // elimina preventivo
+    await prisma.quote.delete({
+
+      where: {
+        id
+      }
+    });
+
+    res.json({
+      success: true
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json({
+      error: "Errore eliminazione"
+    });
+  }
+});
+
+
+
 /* =========================================
    MATERIALI
 ========================================= */
@@ -664,6 +716,9 @@ app.get("/quotes/:id/pdf", async (req, res) => {
       .send("Errore PDF");
   }
 });
+
+
+
 
 /* =========================================
    SERVER
