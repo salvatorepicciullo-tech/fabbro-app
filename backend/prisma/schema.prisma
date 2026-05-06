@@ -8,79 +8,93 @@ datasource db {
 }
 
 model Client {
-  id          Int      @id @default(autoincrement())
+  id            Int      @id @default(autoincrement())
+
+  // ⚠️ NON ELIMINARE
+  // serve per evitare errore prisma deploy
+  name          String
 
   // PRIVATO / AZIENDA
-  companyName String?
-  contactName String?
+  companyName   String?
+  contactName   String?
 
-  vat         String?
-  fiscalCode  String?
+  vat           String?
+  fiscalCode    String?
 
-  sdi         String?
-  pec         String?
+  sdi           String?
+  pec           String?
 
-  phone       String?
-  email       String?
+  phone         String?
+  email         String?
 
-  address     String?
+  address       String?
 
-  createdAt   DateTime @default(now())
+  createdAt     DateTime @default(now())
 
-  quotes      Quote[]
+  quotes        Quote[]
 }
 
 model Quote {
-  id         Int          @id @default(autoincrement())
-  clientId   Int
-  client     Client       @relation(fields: [clientId], references: [id])
-  subtotal   Float
-  ivaRate    Float
-  ivaAmount  Float
-  total      Float
-  description String?   // 👈 NUOVO
-  createdAt  DateTime     @default(now())
-  items      QuoteItem[]
+  id            Int          @id @default(autoincrement())
+
+  clientId      Int
+  client        Client       @relation(fields: [clientId], references: [id])
+
+  subtotal      Float
+  ivaRate       Float
+  ivaAmount     Float
+  total         Float
+
+  description   String?
+
+  createdAt     DateTime     @default(now())
+
+  items         QuoteItem[]
 }
 
 model QuoteItem {
-  id       Int    @id @default(autoincrement())
-  quoteId  Int
-  quote    Quote  @relation(fields: [quoteId], references: [id])
-  type     String
-  name     String
-  qty      Float
-  price    Float
-  total    Float
+  id            Int      @id @default(autoincrement())
+
+  quoteId       Int
+  quote         Quote    @relation(fields: [quoteId], references: [id])
+
+  type          String
+  name          String
+
+  qty           Float
+  price         Float
+  total         Float
 }
 
 model PriceItem {
-  id        Int      @id @default(autoincrement())
-  name      String
-  price     Float
-  unit      String
-  createdAt DateTime @default(now())
+  id            Int      @id @default(autoincrement())
+
+  name          String
+  price         Float
+  unit          String
+
+  createdAt     DateTime @default(now())
 }
 
 model CompanySettings {
-  id        Int      @id @default(autoincrement())
+  id            Int      @id @default(autoincrement())
 
-  companyName String?
-  owner       String?
+  companyName   String?
+  owner         String?
 
-  vat         String?
-  sdi         String?
-  pec         String?
+  vat           String?
+  sdi           String?
+  pec           String?
 
-  phone       String?
-  email       String?
+  phone         String?
+  email         String?
 
-  iban        String?
+  iban          String?
 
-  address     String?
-  city        String?
+  address       String?
+  city          String?
 
-  logo        String?
+  logo          String?
 
-  createdAt DateTime @default(now())
+  createdAt     DateTime @default(now())
 }
