@@ -218,6 +218,41 @@ app.delete("/quotes/:id", async (req, res) => {
 });
 
 
+// ❌ ELIMINA PREVENTIVO
+app.delete("/quotes/:id", async (req, res) => {
+
+  const id = Number(req.params.id);
+
+  try {
+
+    await prisma.quoteItem.deleteMany({
+      where: {
+        quoteId: id
+      }
+    });
+
+    await prisma.quote.delete({
+      where: {
+        id
+      }
+    });
+
+    res.json({
+      success: true
+    });
+
+  } catch (err) {
+
+    console.error(err);
+
+    res.status(500).json({
+      error: "Errore eliminazione"
+    });
+
+  }
+
+});
+
 /* =========================
    SERVER
 ========================= */
