@@ -8,13 +8,26 @@ datasource db {
 }
 
 model Client {
-  id        Int      @id @default(autoincrement())
-  name      String
-  phone     String?
-  email     String?   // 🔥 nuovo
-  address   String?   // 🔥 nuovo
-  createdAt DateTime @default(now())
-  quotes    Quote[]
+  id          Int      @id @default(autoincrement())
+
+  // PRIVATO / AZIENDA
+  companyName String?
+  contactName String?
+
+  vat         String?
+  fiscalCode  String?
+
+  sdi         String?
+  pec         String?
+
+  phone       String?
+  email       String?
+
+  address     String?
+
+  createdAt   DateTime @default(now())
+
+  quotes      Quote[]
 }
 
 model Quote {
@@ -46,5 +59,28 @@ model PriceItem {
   name      String
   price     Float
   unit      String
+  createdAt DateTime @default(now())
+}
+
+model CompanySettings {
+  id        Int      @id @default(autoincrement())
+
+  companyName String?
+  owner       String?
+
+  vat         String?
+  sdi         String?
+  pec         String?
+
+  phone       String?
+  email       String?
+
+  iban        String?
+
+  address     String?
+  city        String?
+
+  logo        String?
+
   createdAt DateTime @default(now())
 }
