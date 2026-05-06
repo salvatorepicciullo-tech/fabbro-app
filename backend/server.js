@@ -130,17 +130,70 @@ app.put("/quotes/:id", async (req, res) => {
 
   try {
 
+    // PREVENTIVO ESISTENTE
+    const existingQuote =
+      await prisma.quote.findUnique({
+
+        where: {
+          id
+        },
+
+        include: {
+          client: true
+        }
+      });
+
+    if (!existingQuote) {
+
+      return res.status(404).json({
+        error: "Preventivo non trovato"
+      });
+    }
+
     // UPDATE CLIENTE
     await prisma.client.update({
+
       where: {
-        id: client.id
+        id: existingQuote.client.id
       },
 
-      data: client
+      data: {
+
+        name:
+          client.name || "",
+
+        companyName:
+          client.companyName || "",
+
+        contactName:
+          client.contactName || "",
+
+        vat:
+          client.vat || "",
+
+        fiscalCode:
+          client.fiscalCode || "",
+
+        sdi:
+          client.sdi || "",
+
+        pec:
+          client.pec || "",
+
+        phone:
+          client.phone || "",
+
+        email:
+          client.email || "",
+
+        address:
+          client.address || ""
+      }
     });
 
     // ELIMINA RIGHE VECCHIE
     await prisma.quoteItem.deleteMany({
+
       where: {
         quoteId: id
       }
@@ -149,7 +202,7 @@ app.put("/quotes/:id", async (req, res) => {
     // TOTALI
     const subtotal = items.reduce(
       (acc, i) =>
-        acc + Number(i.total),
+        acc + Number(i.total || 0),
       0
     );
 
@@ -177,12 +230,23 @@ app.put("/quotes/:id", async (req, res) => {
           description,
 
           items: {
+
             create: items.map((i) => ({
-              type: i.type || "material",
-              name: i.name,
-              qty: Number(i.qty),
-              price: Number(i.price),
-              total: Number(i.total)
+
+              type:
+                i.type || "material",
+
+              name:
+                i.name || "",
+
+              qty:
+                Number(i.qty || 0),
+
+              price:
+                Number(i.price || 0),
+
+              total:
+                Number(i.total || 0)
             }))
           }
         },
@@ -201,39 +265,6 @@ app.put("/quotes/:id", async (req, res) => {
 
     res.status(500).json({
       error: "Errore update preventivo"
-    });
-  }
-});
-
-// ELIMINA PREVENTIVO
-app.delete("/quotes/:id", async (req, res) => {
-
-  const id = Number(req.params.id);
-
-  try {
-
-    await prisma.quoteItem.deleteMany({
-      where: {
-        quoteId: id
-      }
-    });
-
-    await prisma.quote.delete({
-      where: {
-        id
-      }
-    });
-
-    res.json({
-      success: true
-    });
-
-  } catch (err) {
-
-    console.log(err);
-
-    res.status(500).json({
-      error: "Errore eliminazione"
     });
   }
 });
