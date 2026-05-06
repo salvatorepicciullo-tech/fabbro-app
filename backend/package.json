@@ -1,4 +1,9 @@
 {
+  "scripts": {
+    "start": "node server.js",
+    "postinstall": "prisma generate && prisma db push"
+  },
+
   "dependencies": {
     "@prisma/client": "^5.22.0",
     "cors": "^2.8.6",
