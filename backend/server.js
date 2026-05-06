@@ -504,6 +504,102 @@ app.get("/quotes/:id/pdf", async (req, res) => {
   }
 });
 
+
+// ==========================
+// UPDATE PREVENTIVO
+// ==========================
+
+app.put("/quotes/:id", async (req, res) => {
+
+  try {
+
+    const id = Number(req.params.id);
+
+    const {
+      client,
+      items,
+      ivaRate,
+      description
+    } = req.body;
+
+    // TOTALI
+    const subtotal = items.reduce(
+      (acc, i) =>
+        acc + (i.qty * i.price),
+      0
+    );
+
+    const ivaAmount =
+      subtotal * (ivaRate / 100);
+
+    const total =
+      subtotal + ivaAmount;
+
+    // CLIENTE
+    const updatedClient =
+      await prisma.client.update({
+        where: {
+          id: client.id
+        },
+
+        data: client
+      });
+
+    // ELIMINA RIGHE VECCHIE
+    await prisma.quoteItem.deleteMany({
+      where: {
+        quoteId: id
+      }
+    });
+
+    // UPDATE PREVENTIVO
+    const quote =
+      await prisma.quote.update({
+
+        where: {
+          id
+        },
+
+        data: {
+
+          subtotal,
+          ivaRate,
+          ivaAmount,
+          total,
+
+          description,
+
+          items: {
+            create: items.map((item) => ({
+              type: item.type || "material",
+              name: item.name,
+              qty: Number(item.qty),
+              price: Number(item.price),
+              total:
+                Number(item.qty) *
+                Number(item.price)
+            }))
+          }
+        },
+
+        include: {
+          client: true,
+          items: true
+        }
+      });
+
+    res.json(quote);
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.status(500).json({
+      error: "Errore modifica preventivo"
+    });
+  }
+});
+
 /* =========================
    SERVER
 ========================= */
