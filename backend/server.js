@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const { PrismaClient } = require("@prisma/client");
-
+const PDFDocument = require("pdfkit");
 const app = express();
 const prisma = new PrismaClient();
 const PDFDocument = require("pdfkit");
@@ -318,6 +318,191 @@ app.post("/settings", async (req, res) => {
   }
 });
 
+
+
+// ==========================
+// PDF PREVENTIVO
+// ==========================
+
+app.get("/quotes/:id/pdf", async (req, res) => {
+
+  try {
+
+    const id = Number(req.params.id);
+
+    const quote = await prisma.quote.findUnique({
+      where: { id },
+
+      include: {
+        client: true,
+        items: true
+      }
+    });
+
+    const settings =
+      await prisma.companySettings.findFirst();
+
+    if (!quote) {
+      return res
+        .status(404)
+        .send("Preventivo non trovato");
+    }
+
+    const doc = new PDFDocument({
+      margin: 50
+    });
+
+    // HEADER PDF
+    res.setHeader(
+      "Content-Type",
+      "application/pdf"
+    );
+
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename=preventivo-${id}.pdf`
+    );
+
+    doc.pipe(res);
+
+    // TITOLO
+    doc
+      .fontSize(24)
+      .text(
+        settings?.companyName || "Preventivo",
+        {
+          align: "center"
+        }
+      );
+
+    doc.moveDown();
+
+    // DATI AZIENDA
+    doc
+      .fontSize(11)
+      .text(
+        `P.IVA: ${settings?.vat || ""}`
+      );
+
+    doc.text(
+      `${settings?.address || ""}`
+    );
+
+    doc.text(
+      `${settings?.city || ""}`
+    );
+
+    doc.text(
+      `Tel: ${settings?.phone || ""}`
+    );
+
+    doc.text(
+      `${settings?.email || ""}`
+    );
+
+    doc.moveDown(2);
+
+    // CLIENTE
+    doc
+      .fontSize(18)
+      .text("Cliente");
+
+    doc
+      .fontSize(12)
+      .text(
+        quote.client.companyName ||
+        quote.client.name ||
+        ""
+      );
+
+    doc.text(
+      quote.client.contactName || ""
+    );
+
+    doc.text(
+      `P.IVA: ${quote.client.vat || ""}`
+    );
+
+    doc.text(
+      quote.client.address || ""
+    );
+
+    doc.moveDown();
+
+    // DESCRIZIONE
+    if (quote.description) {
+
+      doc
+        .fontSize(14)
+        .text("Descrizione lavoro");
+
+      doc
+        .fontSize(11)
+        .text(quote.description);
+
+      doc.moveDown();
+    }
+
+    // TABELLA
+    doc
+      .fontSize(16)
+      .text("Materiali / Lavorazioni");
+
+    doc.moveDown();
+
+    quote.items.forEach((item) => {
+
+      doc
+        .fontSize(11)
+        .text(
+          `${item.name} | ${item.qty} x €${item.price} = €${item.total}`
+        );
+    });
+
+    doc.moveDown(2);
+
+    // TOTALI
+    doc
+      .fontSize(14)
+      .text(
+        `Subtotale: € ${quote.subtotal.toFixed(2)}`
+      );
+
+    doc.text(
+      `IVA: € ${quote.ivaAmount.toFixed(2)}`
+    );
+
+    doc
+      .fontSize(20)
+      .text(
+        `TOTALE: € ${quote.total.toFixed(2)}`,
+        {
+          align: "right"
+        }
+      );
+
+    doc.moveDown(3);
+
+    doc
+      .fontSize(10)
+      .text(
+        "Firma cliente _____________________",
+        {
+          align: "right"
+        }
+      );
+
+    doc.end();
+
+  } catch (err) {
+
+    console.log(err);
+
+    res
+      .status(500)
+      .send("Errore PDF");
+  }
+});
 
 /* =========================
    SERVER
