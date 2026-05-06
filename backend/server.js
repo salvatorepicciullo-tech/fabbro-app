@@ -253,6 +253,76 @@ app.delete("/quotes/:id", async (req, res) => {
 
 });
 
+
+// ==========================
+// SETTINGS AZIENDA
+// ==========================
+
+// GET SETTINGS
+app.get("/settings", async (req, res) => {
+
+  try {
+
+    const settings =
+      await prisma.companySettings.findFirst();
+
+    res.json(settings || {});
+
+  } catch (err) {
+
+    console.log(err);
+
+    res
+      .status(500)
+      .json({
+        error: "Errore lettura settings"
+      });
+  }
+});
+
+// SAVE SETTINGS
+app.post("/settings", async (req, res) => {
+
+  try {
+
+    const existing =
+      await prisma.companySettings.findFirst();
+
+    let settings;
+
+    if (existing) {
+
+      settings =
+        await prisma.companySettings.update({
+          where: {
+            id: existing.id
+          },
+
+          data: req.body
+        });
+
+    } else {
+
+      settings =
+        await prisma.companySettings.create({
+          data: req.body
+        });
+    }
+
+    res.json(settings);
+
+  } catch (err) {
+
+    console.log(err);
+
+    res
+      .status(500)
+      .json({
+        error: "Errore salvataggio settings"
+      });
+  }
+});
+
 /* =========================
    SERVER
 ========================= */
