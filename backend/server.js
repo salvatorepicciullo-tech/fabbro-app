@@ -505,27 +505,39 @@ app.get("/quotes/:id/pdf", async (req, res) => {
 });
 
 
-// ==========================
 // UPDATE PREVENTIVO
-// ==========================
-
 app.put("/quotes/:id", async (req, res) => {
+
+  const id = Number(req.params.id);
+
+  const {
+    client,
+    items,
+    ivaRate,
+    description
+  } = req.body;
 
   try {
 
-    const id = Number(req.params.id);
+    // aggiorna cliente
+    await prisma.client.update({
+      where: {
+        id: client.id
+      },
+      data: client
+    });
 
-    const {
-      client,
-      items,
-      ivaRate,
-      description
-    } = req.body;
+    // elimina righe vecchie
+    await prisma.quoteItem.deleteMany({
+      where: {
+        quoteId: id
+      }
+    });
 
-    // TOTALI
+    // ricalcoli
     const subtotal = items.reduce(
       (acc, i) =>
-        acc + (i.qty * i.price),
+        acc + Number(i.total),
       0
     );
 
@@ -535,30 +547,11 @@ app.put("/quotes/:id", async (req, res) => {
     const total =
       subtotal + ivaAmount;
 
-    // CLIENTE
-    const updatedClient =
-      await prisma.client.update({
-        where: {
-          id: client.id
-        },
-
-        data: client
-      });
-
-    // ELIMINA RIGHE VECCHIE
-    await prisma.quoteItem.deleteMany({
-      where: {
-        quoteId: id
-      }
-    });
-
-    // UPDATE PREVENTIVO
-    const quote =
+    // update preventivo
+    const updated =
       await prisma.quote.update({
 
-        where: {
-          id
-        },
+        where: { id },
 
         data: {
 
@@ -566,18 +559,15 @@ app.put("/quotes/:id", async (req, res) => {
           ivaRate,
           ivaAmount,
           total,
-
           description,
 
           items: {
-            create: items.map((item) => ({
-              type: item.type || "material",
-              name: item.name,
-              qty: Number(item.qty),
-              price: Number(item.price),
-              total:
-                Number(item.qty) *
-                Number(item.price)
+            create: items.map((i) => ({
+              type: i.type || "material",
+              name: i.name,
+              qty: Number(i.qty),
+              price: Number(i.price),
+              total: Number(i.total)
             }))
           }
         },
@@ -588,14 +578,14 @@ app.put("/quotes/:id", async (req, res) => {
         }
       });
 
-    res.json(quote);
+    res.json(updated);
 
   } catch (err) {
 
     console.log(err);
 
     res.status(500).json({
-      error: "Errore modifica preventivo"
+      error: "Errore update preventivo"
     });
   }
 });
